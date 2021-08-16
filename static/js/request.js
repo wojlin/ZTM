@@ -1,3 +1,4 @@
+var debug_mode = true;
 var wait = 30000;
 var vehicles = L.layerGroup().addTo(map);
 var routes = L.layerGroup().addTo(map);
@@ -78,6 +79,10 @@ function ztm_request() {
   // this code is responsible for retrieving data from http request
   for (let i = 0; i < requests.length; i++) {
     try {
+      if(debug_mode)
+      {
+        var startTime = new Date().getTime();
+      }
       var raw_request_data = new XMLHttpRequest();
       raw_request_data.open("GET", requests[i], false);
       raw_request_data.send();
@@ -85,6 +90,11 @@ function ztm_request() {
         throw new Error("bad code");
       }
       data.push(JSON.parse(raw_request_data.responseText)); // pusing response to data variable
+      if(debug_mode)
+      {
+        var endTime = new Date().getTime();
+        console.log("downloaded " + i + " request in " + String(endTime-startTime) + " ms")
+      }
     } catch {
       console.log("No internet connection or ztm servers are not responding");
       return;
@@ -209,6 +219,10 @@ function VEHICLES_MARKERS() {
 
   console.log(data[0]["Vehicles"].length + " vehicles loaded!");
 
+  if(debug_mode)
+  {
+    var startTime = new Date().getTime();
+  }
 
   for (var i = 0; i < data[0]["Vehicles"].length; i++) {
     date = Object.keys(data[1])[0];
@@ -233,8 +247,6 @@ function VEHICLES_MARKERS() {
             var trip_type = data[2][date]["trips"][t]["type"]
             var speed = data[0]["Vehicles"][i]['Speed'];
             var data_generated = data[0]["Vehicles"][i]['DataGenerated'];
-            var startDate = new Date();
-            var endDate = new Date();
             var time_converted = (Date.parse(String(data_generated)) - new Date().getTime()) / 1000;
             var delay = data[0]["Vehicles"][i]['Delay'];
             var vehicleCode = data[0]["Vehicles"][i]['VehicleCode'];
@@ -302,6 +314,12 @@ function VEHICLES_MARKERS() {
         break;
       }
     }
+  }
+
+  if(debug_mode)
+  {
+    var endTime = new Date().getTime();
+    console.log("all vehicles placed on map in " + String(endTime-startTime) + " ms")
   }
 
   ztm_cleanup(vehicles_lines, vehicles_groups);

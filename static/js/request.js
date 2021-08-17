@@ -7,9 +7,16 @@ var routes = L.layerGroup().addTo(map);
 var routes_stops = L.layerGroup().addTo(map);
 var date = null;
 var first_boot = true;
-var data = []
+var data = [null,null,null,null,null]
 var loading_panel = document.getElementById("loading");
 var loading_text = document.getElementById("loading_text");
+var requests = [
+  ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps...","!"],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json", "ładowanie listy tras...","!"],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json", "ładowanie listy kursów...","!"],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/d3e96eb6-25ad-4d6c-8651-b1eb39155945/download/stopsingdansk.json", "ładowanie pozycji przystanków...","."],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/3115d29d-b763-4af5-93f6-763b835967d6/download/stopsintrip.json", "ładowanie przystanków powiązanych z trasą...","."]
+]
 
 // this fuction is responsible for copying text to device clipboard
 function copyToClipboard(text) {
@@ -78,39 +85,38 @@ function ztm_cleanup(vehicles_lines, vehicles_groups) {
 // -> acquisition of bus geeJSON track
 /////////////////////////////////////////////////////////////
 function ztm_request() {
-  data = []
-
-  requests = [
-    ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps..."],
-    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json", "ładowanie listy tras..."],
-    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json", "ładowanie listy kursów..."],
-    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/d3e96eb6-25ad-4d6c-8651-b1eb39155945/download/stopsingdansk.json", "ładowanie pozycji przystanków..."],
-    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/3115d29d-b763-4af5-93f6-763b835967d6/download/stopsintrip.json", "ładowanie przystanków powiązanych z trasą..."]
-  ]
+  // 0:url   1:loading text 2:priority  {!=reload everytime   .="load only once"}
 
   // this code is responsible for retrieving data from http request
   for (let i = 0; i < requests.length; i++) {
-    try {
-      if (first_boot == true) {
-        loading_text.innerHTML = requests[i][1];
+    if(requests[i][2] == "!" || requests[i][2] == ".")
+    {
+      try {
+        if (first_boot == true) {
+          loading_text.innerHTML = requests[i][1];
+        }
+        if (debug_mode) {
+          var startTime = new Date().getTime();
+        }
+        var raw_request_data = new XMLHttpRequest();
+        raw_request_data.open("GET", requests[i][0], false);
+        raw_request_data.send();
+        if (raw_request_data.status != 200) {
+          throw new Error("bad code");
+        }
+        data[i] = JSON.parse(raw_request_data.responseText); // pusing response to data variable
+        if (debug_mode) {
+          var endTime = new Date().getTime();
+          console.log("downloaded " + i + " request in " + String(endTime - startTime) + " ms")
+        }
+        if(requests[i][2] == ".")
+        {
+          requests[i][2] = "?";
+        }
+      } catch {
+        console.log("No internet connection or ztm servers are not responding");
+        return;
       }
-      if (debug_mode) {
-        var startTime = new Date().getTime();
-      }
-      var raw_request_data = new XMLHttpRequest();
-      raw_request_data.open("GET", requests[i][0], false);
-      raw_request_data.send();
-      if (raw_request_data.status != 200) {
-        throw new Error("bad code");
-      }
-      data.push(JSON.parse(raw_request_data.responseText)); // pusing response to data variable
-      if (debug_mode) {
-        var endTime = new Date().getTime();
-        console.log("downloaded " + i + " request in " + String(endTime - startTime) + " ms")
-      }
-    } catch {
-      console.log("No internet connection or ztm servers are not responding");
-      return;
     }
   }
   first_boot = false;

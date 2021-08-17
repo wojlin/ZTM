@@ -3,6 +3,7 @@ var wait = 30000;
 var vehicles = L.layerGroup().addTo(map);
 var routes = L.layerGroup().addTo(map);
 var date = null;
+var first_boot = true;
 
 function copyToClipboard(text) {
   var dummy = document.createElement("textarea");
@@ -71,20 +72,28 @@ function ztm_cleanup(vehicles_lines, vehicles_groups) {
 /////////////////////////////////////////////////////////////
 function ztm_request() {
   data = []
-  requests = ["https://ckan2.multimediagdansk.pl/gpsPositions",
-    "https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json",
-    "https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json"
+  var loading_panel = document.getElementById("loading");
+  var loading_text = document.getElementById("loading_text");
+
+  requests = [["https://ckan2.multimediagdansk.pl/gpsPositions","ładowanie pozycji gps"],
+    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json","ładowanie listy tras"],
+    ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json","ładowanie listy kursów"]
   ]
 
   // this code is responsible for retrieving data from http request
   for (let i = 0; i < requests.length; i++) {
     try {
+      if(first_boot == true)
+      {
+        loading.style.display = "block";
+        loading_text.innerHTML = requests[i][1];
+      }
       if(debug_mode)
       {
         var startTime = new Date().getTime();
       }
       var raw_request_data = new XMLHttpRequest();
-      raw_request_data.open("GET", requests[i], false);
+      raw_request_data.open("GET", requests[i][0], false);
       raw_request_data.send();
       if (raw_request_data.status != 200) {
         throw new Error("bad code");
@@ -95,11 +104,14 @@ function ztm_request() {
         var endTime = new Date().getTime();
         console.log("downloaded " + i + " request in " + String(endTime-startTime) + " ms")
       }
+      loading.style.display = "none";
     } catch {
       console.log("No internet connection or ztm servers are not responding");
       return;
     }
   }
+  first_boot = false;
+  loading.style.display = "none";
   return data;
 }
 
@@ -182,7 +194,7 @@ function ztm_converted_direction(direction) {
 }
 
 // this function return cleaner delay time based on delay parameter
-function ztm_convered_delay(delay) {
+function ztm_converted_delay(delay) {
   converted_delay = "";
   if (delay > 120) {
     converted_delay = parseInt(delay / 60) + " minut"
@@ -214,6 +226,7 @@ function VEHICLES_MARKERS() {
   data = ztm_request()
 
   vehicles.clearLayers();
+  routes.clearLayers();
   var vehicles_lines = [];
   var vehicles_groups = {};
 
@@ -270,7 +283,7 @@ function VEHICLES_MARKERS() {
 
             // binding popup with informations about the vehicle
             var popup_data =
-              "<ul data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
+              "<ul data-direction='"+ direction +"' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
               "<li style='text-align:center;'><p>" + "<span style='color:red;'>" + line + "  " + "</span><span><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span></p></li>" +
               "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
               "<li></li>" +
@@ -278,7 +291,7 @@ function VEHICLES_MARKERS() {
               "<span style='display:inline;float:right;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='margin-top:-2px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span></li>" +
               "<li></li>" +
               "<li><b>prędkość: </b>" + speed + "km/h</li>" +
-              "<li><b>opóźnienie: </b> " + ztm_convered_delay(delay) + "</li>" +
+              "<li><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
               "<li><b>wygenerowane: </b> <span id='generated_" + vehicleId + "'>" + Math.abs(parseInt(time_converted)) + " sekund temu</span></li>" +
               "<li><b>sygnał gps: </b> " + ztm_converted_gps_quality(gps_quality) + "</li>" +
               "<li><b>rodzaj trasy: </b>" + ztm_converted_trip_type(trip_type) + "</li>" +
@@ -334,6 +347,8 @@ map.on('popupopen', function(e) {
   var doc = new DOMParser().parseFromString(marker_str, "text/xml").firstChild;
   var tripId = doc.getAttribute("data-tripId");
   var routeId = doc.getAttribute("data-routeId");
+  var direction = doc.getAttribute("data-direction");
+
 
   geojson = ztm_get_route(date, routeId, tripId)
   var myLines = [{
@@ -345,9 +360,50 @@ map.on('popupopen', function(e) {
     "weight": 5,
     "opacity": 0.65
   };
-  L.geoJSON(myLines, {
-    style: myStyle
-  }).addTo(routes);
+  //L.geoJSON(myLines, {
+  //  style: myStyle
+  //}).addTo(routes);
+  var reversed_coordinates = [];
+  for (var i = 0; i < geojson["coordinates"].length; i++)
+  {
+    let local_lat = geojson["coordinates"][i][0]
+    let local_lon = geojson["coordinates"][i][1]
+    reversed_coordinates.push([local_lon, local_lat])
+  }
+
+  var polyline = L.polyline(reversed_coordinates, {style: myStyle}).addTo(routes);
+  polyline.setStyle({
+    color: 'red',
+    weight: 5,
+    opacity: 1
+  });
+
+  if(parseInt(direction) == 1)
+  {
+    var arrowHead = L.polylineDecorator(polyline, {
+      patterns: [
+          {offset: '0%', repeat: 30, symbol: L.Symbol.arrowHead({pixelSize: 17, polygon: false, pathOptions: {color: 'red',
+          weight: 2,
+          opacity: 1,stroke: true}})}
+      ]
+    }).addTo(routes);
+  }
+  else if(parseInt(direction) == 2)
+  {
+    var arrowHead = L.polylineDecorator(polyline, {
+        patterns: [
+            {offset: '0%', repeat: 30, symbol: L.Symbol.arrowHead({heading: 180, pixelSize: 17, polygon: false, pathOptions: {color: 'red',
+            weight: 2,
+            opacity: 1,stroke: true}})}
+        ]
+    }).addTo(routes);
+  }
+  else
+  {
+    console.error("wrong direction");
+  }
+
+
 });
 
 //event responsible for purging geoJSON path when vehicle is clicked

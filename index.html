@@ -6,11 +6,15 @@
         <link rel="stylesheet" href="static/css/style.css" />
         <link rel="stylesheet" href="static/css/leaflet.css" />
         <link rel="stylesheet" href="static/css/loader.css" />
+        <link rel="stylesheet" href="static/css/error.css" />
         <script src="static/js/leaflet.js"></script>
         <script src="static/js/polylineDecorator.js"></script>
         <link rel="shortcut icon" href="static/images/favicon.ico" type="image/x-icon">
     </head>
     <body>
+
+        <div id="ztm_attrib"><span>Zarząd Transportu Miejskiego w Gdańsku </span><a href="http://www.ztm.gda.pl/otwarty_ztm">http://www.ztm.gda.pl/otwarty_ztm</a></div>
+
         <div id="loading">
           <div id="loading_panel">
             <div id="logo">
@@ -19,21 +23,47 @@
             </div>
           </div>
         </div>
+
+        <div id="error">
+          <div id="error_panel">
+              <div id="error_text">ERROR</div>
+              <button id="error_button" onclick="document,getElementById('error').style.display='none';">POTWIERDZAM</button>
+          </div>
+        </div>
+
         <div id="map"></div>
         <script>
 
-            var color = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
-                dark   = L.tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png");
+            var open_street_map = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
+
+            var smooth_dark_map = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+            });
+
+            var topo_osm  = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+          	attribution: '<a href="https://github.com/cyclosm/cyclosm-cartocss-style/releases" title="CyclOSM - Open Bicycle render">CyclOSM</a> | Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          });
+
+            var sat_map = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+          });
 
             var map = L.map('map', {
                 center: [54.39481839564792, 18.55759474331235],
                 zoom: 13,
-                layers: color
+                layers: open_street_map
             });
 
             var baseMaps = {
-            "dark": dark,
-            "color": color
+            "street": open_street_map,
+            "dark": smooth_dark_map,
+            "topo": topo_osm ,
+            "sat": sat_map
             };
 
             var vehicleType ={};
@@ -72,9 +102,9 @@
             var bus_stop_icon = L.icon({
                 iconUrl: 'static/images/bus_stop_icon.png',
                 iconSize:     [10, 10], // size of the icon
-                iconAnchor:   [15, 15], // point of the icon which will correspond to marker's location
+                iconAnchor:   [5, 0], // point of the icon which will correspond to marker's location
                 shadowAnchor: [0, 0],  // the same for the shadow
-                popupAnchor:  [0, -10], // point from which the popup should open relative to the iconAnchor
+                popupAnchor:  [-0, -10], // point from which the popup should open relative to the iconAnchor
                 shadowSize:  [0,0]
             });
 

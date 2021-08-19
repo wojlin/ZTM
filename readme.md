@@ -16,15 +16,14 @@ app downloads data from Open Data from ZTM in Gdańsk and dispalys it on the lea
 <img style="margin-top:20px;" alt="map1" width="500px" height="350px" src="static/images/showcase3.png" />
 
 #### languages and tools used:
-<img style="margin-left:5px;" alt="icon" width="35px" height="35px" src="static/images/html.png" />
 
-<img style="margin-left:5px;" alt="icon" width="35px" height="35px" src="static/images/js.png" />
-
-<img style="margin-left:5px;" alt="icon" width="35px" height="35px" src="static/images/css.png" />
-
-<img style="margin-left:5px;" alt="icon" width="35px" height="35px" src="static/images/leaflet.png" />
-
-<img style="margin-left:5px;" alt="icon" width="35px" height="35px" src="static/images/ztm.png" />
+<div style="width:100%;display:block;">
+  <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://en.wikipedia.org/wiki/HTML"><img alt="icon" width="35px" height="35px" src="static/images/html.png" /></a>
+  <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://en.wikipedia.org/wiki/JavaScript"><img alt="icon" width="35px" height="35px" src="static/images/js.png" /></a>
+  <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://en.wikipedia.org/wiki/CSS"><img alt="icon" width="35px" height="35px" src="static/images/css.png" /></a>
+  <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://leafletjs.com/"><img alt="icon" width="35px" height="35px" src="static/images/leaflet.png" /></a>
+  <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://ztm.gda.pl/"><img alt="icon" width="35px" height="35px" src="static/images/ztm.png" /></a>
+</div>
 
 #### to do:
 * top bar with informations

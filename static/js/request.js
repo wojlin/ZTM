@@ -19,6 +19,8 @@ var error_text = document.getElementById("error_text");
 
 var current_marker = null;
 
+var update_generated = true;
+
 var requests = [
   ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps...", "!"],
   ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json", "ładowanie listy tras...", "!"],
@@ -301,6 +303,7 @@ function VEHICLES_MARKERS() {
   vehicles.clearLayers();
   routes.clearLayers();
   routes_stops.clearLayers();
+  update_generated = false;
 
   var vehicles_lines = [];
   var vehicles_groups = {};
@@ -375,7 +378,7 @@ function VEHICLES_MARKERS() {
 
           // binding popup with informations about the vehicle
           var popup_data =
-            "<ul data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
+            "<ul data-generated='"+data_generated+"' data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
             "<li style='text-align:center;'><p>" + "<span style='color:red;'>" + line + "  " + "</span><span><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span></p></li>" +
             "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
             "<li></li>" +
@@ -383,32 +386,14 @@ function VEHICLES_MARKERS() {
             "<span style='display:inline;float:right;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='margin-top:-2px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span></li>" +
             "<li></li>" +
             "<li><b>prędkość: </b>" + speed + "km/h</li>" +
-            "<li><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
-            "<li><b>wygenerowane: </b> <span id='generated_" + vehicleId + "'>" + Math.abs(parseInt(time_converted)) + " sekund temu</span></li>" +
+            "<li id='delay' ><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
+            "<li><b>wygenerowane: </b> <span id='generated_"+vehicleId+"'>" + Math.abs(parseInt(time_converted)) + "</span> sekund temu</li>" +
             "<li><b>sygnał gps: </b> " + ztm_converted_gps_quality(gps_quality) + "</li>" +
             "<li><b>rodzaj trasy: </b>" + ztm_converted_trip_type(trip_type) + "</li>" +
             "<li><b>kod pojazdu: </b>" + vehicleCode + "</li>" +
             "<li><b>ID pojazdu: </b>" + vehicleId + "</li>" +
             "</ul>";
           marker.bindPopup(popup_data);
-
-          // script that will update time that passed after last update
-          var data_str =
-            "function update_data_" + String(data[0]["Vehicles"][i]['VehicleId']) + "(){" +
-            "var t1 = Date.parse('" + String(data[0]["Vehicles"][i]['DataGenerated']) + "');" +
-            "var t2 = new Date();" +
-            "var dif = t1 - t2.getTime();" +
-            "var Seconds_from_T1_to_T2 = dif / 1000;" +
-            "var Seconds_Between_Dates = Math.abs(Seconds_from_T1_to_T2);" +
-            "try {" +
-            "document.getElementById('generated_" + String(data[0]["Vehicles"][i]['VehicleId']) + "').innerHTML = Math.abs(parseInt(Seconds_Between_Dates)) + ' sekund temu' ;" +
-            "}" +
-            "catch(err) {" +
-            "}}" +
-            "for(var x=0; x< parseInt(wait/1000); x++){" +
-            "setTimeout(function() { update_data_" + String(data[0]["Vehicles"][i]['VehicleId']) + "(); }, (x+1)*1000);" +
-            "}";
-          eval(data_str);
 
           // adding vehicle to line overlay group
           vehicles_lines, vehicles_groups = ztm_append_to_line_overlay(line, vehicles_lines, vehicles_groups, marker);
@@ -486,8 +471,30 @@ map.on('popupopen', function(e) {
   var marker_str = String(e.popup._source._popup._content);
   var doc = new DOMParser().parseFromString(marker_str, "text/xml").firstChild;
   var tripId = doc.getAttribute("data-tripId");
+  var id = String(doc.getAttribute("data-id"));
   var routeId = doc.getAttribute("data-routeId");
   var direction = doc.getAttribute("data-direction");
+  var generated = doc.getAttribute("data-generated");
+  // script that will update time that passed after last update
+  update_generated = true;
+
+  var data_str =
+    "function update_data_"+id+"(){" +
+    "var t1 = Date.parse('"+generated+"');" +
+    "var t2 = new Date().getTime();" +
+    "var dif = t1 - t2;" +
+    "var Seconds_from_T1_to_T2 = dif / 1000;" +
+    "var Seconds_Between_Dates = Math.floor(Math.abs(Seconds_from_T1_to_T2));" +
+    "if(update_generated == true){"+
+    "try{"+
+    "document.getElementById('generated_"+id+"').innerHTML = Math.abs(parseInt(Seconds_Between_Dates));" +
+    "setTimeout(function() { update_data_"+id+"(); }, 500);"+
+    "}"+
+    "catch{}"+
+    "}else{update_generated = true;}"+
+    "}" +
+    "update_data_"+id+"();";
+  eval(data_str);
 
   // drawing all stops on route of bus
   if (data[3] != null && data[4] != null) {
@@ -591,6 +598,7 @@ map.on('popupopen', function(e) {
 //event responsible for purging geoJSON path when vehicle is clicked
 map.on('popupclose', function(e) {
   current_marker = null;
+  update_generated = false;
   routes.clearLayers();
   routes_stops.clearLayers();
 });

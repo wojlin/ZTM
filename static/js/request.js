@@ -3,6 +3,7 @@ var wait = 20000;
 var timeout = 5000;
 
 var stops_stop_load_zoom = 15;
+var vehicles_data = [];
 var vehicles = L.layerGroup().addTo(map);
 var stops = L.layerGroup().addTo(map);
 var routes = L.layerGroup().addTo(map);
@@ -15,6 +16,8 @@ var loading_panel = document.getElementById("loading");
 var loading_text = document.getElementById("loading_text");
 var error_panel = document.getElementById("eror");
 var error_text = document.getElementById("error_text");
+
+var current_marker = null;
 
 var requests = [
   ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps...", "!"],
@@ -288,6 +291,12 @@ function ztm_append_to_line_overlay(line, vehicles_lines, vehicles_groups, marke
 // main fuction responsible for everything
 function VEHICLES_MARKERS() {
 
+  var saved_current_marker = null;
+  if(current_marker != null)
+  {
+      saved_current_marker = current_marker;
+  }
+
   stops.clearLayers();
   vehicles.clearLayers();
   routes.clearLayers();
@@ -295,6 +304,7 @@ function VEHICLES_MARKERS() {
 
   var vehicles_lines = [];
   var vehicles_groups = {};
+  vehicles_data = [];
 
   console.log(data);
 
@@ -354,7 +364,7 @@ function VEHICLES_MARKERS() {
             title: routeLongName,
             id: id,
           }).addTo(vehicles);
-
+          vehicles_data.push(marker);
           // binding small label below the icon that indicates vehicle line number
           marker.bindTooltip(data[0]["Vehicles"][i]['Line'], {
             permanent: true,
@@ -365,7 +375,7 @@ function VEHICLES_MARKERS() {
 
           // binding popup with informations about the vehicle
           var popup_data =
-            "<ul data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
+            "<ul data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
             "<li style='text-align:center;'><p>" + "<span style='color:red;'>" + line + "  " + "</span><span><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span></p></li>" +
             "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
             "<li></li>" +
@@ -447,12 +457,30 @@ function VEHICLES_MARKERS() {
 
   loading_panel.style.display = "none";
 
+  if(saved_current_marker != null)
+  {
+      var marker_str = String(saved_current_marker.popup._source._popup._content);
+      var doc = new DOMParser().parseFromString(marker_str, "text/xml").firstChild;
+      var id = doc.getAttribute("data-id");
+      for (var i = 0; i < vehicles_data.length; i++)
+      {
+        var local_marker_str = String(vehicles_data[i]._popup._source._popup._content);
+        var local_doc = new DOMParser().parseFromString(local_marker_str, "text/xml").firstChild;
+        var local_id = local_doc.getAttribute("data-id");
+        if(local_id == id)
+        {
+          vehicles_data[i].openPopup();
+        }
+      }
+  }
+
   setTimeout(ztm_request, wait); // callind fuction again after given time
 }
 
 
 //event responsible for drawing geoJSON path when vehicle is clicked
 map.on('popupopen', function(e) {
+  current_marker = e;
   routes.clearLayers();
   routes_stops.clearLayers();
   var marker_str = String(e.popup._source._popup._content);
@@ -557,12 +585,12 @@ map.on('popupopen', function(e) {
       console.error("wrong direction");
     }
   }
-
 });
 
 
 //event responsible for purging geoJSON path when vehicle is clicked
 map.on('popupclose', function(e) {
+  current_marker = null;
   routes.clearLayers();
   routes_stops.clearLayers();
 });

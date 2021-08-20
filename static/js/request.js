@@ -290,6 +290,13 @@ function ztm_append_to_line_overlay(line, vehicles_lines, vehicles_groups, marke
 }
 
 
+function ztm_move_pane(x) {
+  var top_panes = document.getElementsByClassName("leaflet-top");
+  for (var i = 0; i < top_panes.length; i++) {
+   top_panes[i].style.top = String(x)+"vh";
+  }
+}
+
 // main fuction responsible for everything
 function VEHICLES_MARKERS() {
 
@@ -367,6 +374,7 @@ function VEHICLES_MARKERS() {
             title: routeLongName,
             id: id,
           }).addTo(vehicles);
+
           vehicles_data.push(marker);
           // binding small label below the icon that indicates vehicle line number
           marker.bindTooltip(data[0]["Vehicles"][i]['Line'], {
@@ -377,23 +385,141 @@ function VEHICLES_MARKERS() {
           })
 
           // binding popup with informations about the vehicle
-          var popup_data =
-            "<ul data-generated='"+data_generated+"' data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style=' padding: 0;list-style-type: none;'>" +
-            "<li style='text-align:center;'><p>" + "<span style='color:red;'>" + line + "  " + "</span><span><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span></p></li>" +
-            "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
-            "<li></li>" +
-            "<li><span style='display:inline;text-align:left;'><b>współrzędne: </b>" + coords + "</span>" +
-            "<span style='display:inline;float:right;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='margin-top:-2px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span></li>" +
-            "<li></li>" +
-            "<li><b>prędkość: </b>" + speed + "km/h</li>" +
-            "<li id='delay' ><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
-            "<li><b>wygenerowane: </b> <span id='generated_"+vehicleId+"'>" + Math.abs(parseInt(time_converted)) + "</span> sekund temu</li>" +
-            "<li><b>sygnał gps: </b> " + ztm_converted_gps_quality(gps_quality) + "</li>" +
-            "<li><b>rodzaj trasy: </b>" + ztm_converted_trip_type(trip_type) + "</li>" +
-            "<li><b>kod pojazdu: </b>" + vehicleCode + "</li>" +
-            "<li><b>ID pojazdu: </b>" + vehicleId + "</li>" +
-            "</ul>";
-          marker.bindPopup(popup_data);
+            var popup_data =
+              "<div id='popup_info' data-generated='"+data_generated+"' data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style='display:block; width:100%; margin:0; padding:0;'>" +
+                "<div style='top:-3vh; position:relative; height:12vh; display:inline-block; width:7vw; margin-left:10px;'>"+
+                  "<img style='width:7vh;' src='"+ztm_choose_icon(routeType).options.iconUrl + "' alt='icon' />"+
+                "</div>"+
+                "<div style='position:relative; height:12vh; display:inline-block; width:75px; margin-left:10px;' >"+
+                  "<span style='position:absolute;top:-1vh;width:100%;margin:0;text-align:center; line-height:60px; font-size:42px; color:red;'>" + line + "</span>"+
+                  "<span style='position:absolute;top:6vh;width:100%;margin:0; text-align:center; font-size:17px; color:black;'>" + vehicleCode + "</span>"+
+                "</div>"+
+                "<div style='position:relative; height:12vh; display:inline-block; width:70%; margin-left:10px;' >"+
+                  "<span style='float:left;line-height:70px;font-size:3vw;'><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span>"+
+                "</div>" +
+                "<div style='top:18px; float:right; height:12vh; position:absolute; display:block; width:10vw; right:20px;' >"+
+                    "<a id='button_more' style='display:block;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='block';ztm_move_pane(40); document.getElementById('button_less').style.display='block';document.getElementById('button_more').style.display='none';\""+" class='show_more'>▼ ▼ ▼</a>"+
+                    "<a id='button_less' style='display:none;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='none';ztm_move_pane(13);document.getElementById('button_less').style.display='none';document.getElementById('button_more').style.display='block'; \""+" class='show_more'>▲ ▲ ▲</a>"+
+                "</div>" +
+                "<div id='popup_more' style='display:none;position:absolute;top:10vh;left:0;right:0;background-color:white;border-top:2px solid black;'>"+
+                    "<div style='margin-top:15px;margin-left:15px;height:150px;width:150px;display:inline-block;position:relative'>"+
+                      "<div class='center round' id='board'>"+
+                        "<div class='center' id='red-bar'></div>"+
+                        "<div class='center' id='pointer' style='transform: rotate("+String((parseInt(speed)+2)*3)+"deg)' >"+
+                          "<div class='center round' id='knot'></div>"+
+                          "<div class='center' id='arm'></div>"+
+                        "</div>"+
+                        "<div class='center' id='bars'>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                          "<div class='bar center'>"+
+                          "</div>"+
+                        "</div>"+
+                        "<div class='center' id='numbers'>"+
+                          "<div class='num center'>0</div>"+
+                          "<div class='num center'>10</div>"+
+                          "<div class='num center'>20</div>"+
+                          "<div class='num center'>30</div>"+
+                          "<div class='num center'>40</div>"+
+                          "<div class='num center'>50</div>"+
+                          "<div class='num center'>60</div>"+
+                          "<div class='num center'>70</div>"+
+                          "<div class='num center'>80</div>"+
+                        "</div>"+
+                        "<div class='center' id='mileage'>"+
+                          "<div id='box'>"+speed+"</div>"+
+                          "<div id='miles'>km/h</div>"+
+                        "</div>"+
+                      "</div>"+
+                    "</div>"+
+                    "<div style='display:inline-block;position:relative'>"+
+                      "<ul>"+
+                        "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
+                        "<li><span style='display:inline;text-align:left;'><b>współrzędne: </b>" + coords + "</span>" +
+                        "<span style='display:inline;float:right;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='margin-top:-2px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span></li>" +
+                        "<li id='delay' ><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
+                        "<li><b>wygenerowane: </b> <span id='generated_"+vehicleId+"'>" + Math.abs(parseInt(time_converted)) + "</span> sekund temu</li>" +
+                        "<li><b>sygnał gps: </b> " + ztm_converted_gps_quality(gps_quality) + "</li>" +
+                        "<li><b>rodzaj trasy: </b>" + ztm_converted_trip_type(trip_type) + "</li>" +
+                        "<li><b>kod pojazdu: </b>" + vehicleCode + "</li>" +
+                        "<li><b>ID pojazdu: </b>" + vehicleId + "</li>" +
+                      "</ul>"+
+                  "</div>"+
+                "</div>"+
+              "</div>";
+
+            var popup = L.popup({
+              pane: 'fixed',
+              className: 'popup-fixed',
+              autoPan: false,
+              closeButton: false
+            }).setContent(popup_data);
+
+            marker.bindPopup(popup);
+
+            //marker.bindPopup(popup_data);
 
           // adding vehicle to line overlay group
           vehicles_lines, vehicles_groups = ztm_append_to_line_overlay(line, vehicles_lines, vehicles_groups, marker);
@@ -463,6 +589,7 @@ function VEHICLES_MARKERS() {
 }
 
 
+
 //event responsible for drawing geoJSON path when vehicle is clicked
 map.on('popupopen', function(e) {
   current_marker = e;
@@ -521,6 +648,8 @@ map.on('popupopen', function(e) {
       }
     }
   }
+
+
   if (data[0] != null && data[1] != null && data[2] != null) {
 
     geojson = ztm_get_route(date, routeId, tripId)
@@ -592,15 +721,37 @@ map.on('popupopen', function(e) {
       console.error("wrong direction");
     }
   }
+
+  ztm_move_pane(13);
+
+  current_marker.popup._source._icon.style.width = 60;
+  current_marker.popup._source._icon.style.height = 60;
+  current_marker.popup._source._icon.style.marginLeft = -30;
+  current_marker.popup._source._icon.style.marginTop = -30;
+
+  current_marker.popup._source._tooltip._container.style.marginTop = 20;
 });
 
 
 //event responsible for purging geoJSON path when vehicle is clicked
 map.on('popupclose', function(e) {
+  try
+  {
+  e.popup._source._icon.style.width = 30;
+  e.popup._source._icon.style.height = 30;
+  e.popup._source._icon.style.marginLeft = -15;
+  e.popup._source._icon.style.marginTop = -15;
+
+  e.popup._source._tooltip._container.style.marginTop = 10;
+  }
+  catch{}
   current_marker = null;
   update_generated = false;
   routes.clearLayers();
   routes_stops.clearLayers();
+
+  ztm_move_pane(0);
+
 });
 
 
@@ -630,5 +781,7 @@ map.on('moveend', function(e) {
   }
 });
 
+
+var pane = map.createPane('fixed', document.getElementById('map'));
 
 setTimeout(ztm_request, 3000);

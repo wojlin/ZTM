@@ -2,7 +2,7 @@
 ### web app for displaying position of Gdansk city buses and trams 🚌 🚊
 
 
-app downloads data from Open Data from ZTM in Gdańsk and dispalys it on the leaflet map  🗺
+app downloads data from Open Data ZTM in Gdańsk and displays it on the leaflet map  🗺
 
 <a target="_blank" style="font-size:16px" href="https://ckan.multimediagdansk.pl/dataset/tristar">ztm open data webiste</a>
 
@@ -26,7 +26,7 @@ app downloads data from Open Data from ZTM in Gdańsk and dispalys it on the lea
 </div>
 
 #### to do:
-* top bar with informations
+* top bar with information
 * time
 * fix the one time download
 

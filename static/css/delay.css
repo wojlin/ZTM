@@ -1,0 +1,68 @@
+
+body
+{
+  background-color:rgb(50,50,50);
+}
+
+.display_box
+{
+  position:relative;
+  width:16vw;
+  height:5vw;
+  background-color: #e8271a;
+  border:solid 2px black;
+  margin:auto;
+  font-family: Arial;
+  color: white;
+}
+
+.display_sign
+{
+  position:absolute;
+  width:20%;
+  height:100%;
+  background-color: #e8271a;
+  text-align: center;
+  font-size:4vw;
+  line-height:5vw;
+}
+
+.display_outline
+{
+  position:absolute;
+  width:80%;
+  height:100%;
+  left:20%;
+  background-color: #e8271a;
+}
+
+.display_display
+{
+  position:absolute;
+  left:5px;
+  right:5px;
+  top:5px;
+  bottom:5px;
+  border-radius: 15px;
+  background-color:rgba(255,255,255,0.4);
+}
+
+.display_number
+{
+  width:60%;
+  height:100%;
+  display:inline-block;
+  margin-left:15px;
+  font-size:4vw;
+  line-height:4.5vw;
+}
+.display_digit
+{
+  position:absolute;
+  display:inline-block;
+  text-align:right;
+  float:right;
+  right:5px;
+  font-size:4vw;
+  line-height:4.5vw;
+}

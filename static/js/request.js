@@ -1,5 +1,5 @@
 var debug_mode = true;
-var wait = 20000;
+var wait = 200000;
 var timeout = 5000;
 
 var stops_stop_load_zoom = 15;
@@ -228,13 +228,13 @@ function ztm_converted_trip_type(trip_type) {
 function ztm_converted_gps_quality(gps_quality) {
   var gps_quality_converted = "";
   if (parseInt(gps_quality) == 3) {
-    gps_quality_converted = "bardzo dobry";
+    gps_quality_converted = "icon__signal-strength signal-4";
   } else if (parseInt(gps_quality) == 2) {
-    gps_quality_converted = "dobry";
+    gps_quality_converted = "icon__signal-strength signal-2";
   } else if (parseInt(gps_quality) == 1) {
-    gps_quality_converted = "zły";
+    gps_quality_converted = "icon__signal-strength signal-1";
   } else if (parseInt(gps_quality) == 0) {
-    gps_quality_converted = "brak sygnału";
+    gps_quality_converted = "icon__signal-strength signal-0";
   } else {
     console.log("error");
     gps_quality_converted = "error";
@@ -295,6 +295,42 @@ function ztm_move_pane(x) {
   for (var i = 0; i < top_panes.length; i++) {
    top_panes[i].style.top = String(x)+"vh";
   }
+}
+
+
+function ztm_set_delay_value(val){
+  var color = '';
+  var sign = document.getElementById("sign");
+  var digit = document.getElementById("digit");
+
+  if(parseInt(val) <= 0)
+  {
+    color = "#3bad24";
+    sign.innerHTML = "-";
+  }else
+  {
+    color = "#e8271a";
+    sign.innerHTML = "+";
+  }
+
+  if(parseInt(val) >= 120 || parseInt(val) <= -120)
+  {
+    var number = document.getElementById("number");
+  number.innerHTML = String(parseInt(Math.abs(parseInt(val)/60)));
+    digit.innerHTML = "M";
+  }else
+  {
+    var number = document.getElementById("number");
+  number.innerHTML = String(Math.abs(parseInt(val)));
+    digit.innerHTML = "S";
+  }
+
+  var display_outline = document.getElementById("display_outline")
+  display_outline.style.backgroundColor = color;
+
+  var sign = document.getElementById("sign")
+  sign.style.backgroundColor = color;
+
 }
 
 // main fuction responsible for everything
@@ -398,11 +434,11 @@ function VEHICLES_MARKERS() {
                   "<span style='float:left;line-height:70px;font-size:3vw;'><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span>"+
                 "</div>" +
                 "<div style='top:18px; float:right; height:12vh; position:absolute; display:block; width:10vw; right:20px;' >"+
-                    "<a id='button_more' style='display:block;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='block';ztm_move_pane(40); document.getElementById('button_less').style.display='block';document.getElementById('button_more').style.display='none';\""+" class='show_more'>▼ ▼ ▼</a>"+
+                    "<a id='button_more' style='display:block;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='block';ztm_set_delay_value('"+delay+"');ztm_move_pane(40); document.getElementById('button_less').style.display='block';document.getElementById('button_more').style.display='none';\""+" class='show_more'>▼ ▼ ▼</a>"+
                     "<a id='button_less' style='display:none;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='none';ztm_move_pane(13);document.getElementById('button_less').style.display='none';document.getElementById('button_more').style.display='block'; \""+" class='show_more'>▲ ▲ ▲</a>"+
                 "</div>" +
-                "<div id='popup_more' style='display:none;position:absolute;top:10vh;left:0;right:0;background-color:white;border-top:2px solid black;'>"+
-                    "<div style='margin-top:15px;margin-left:15px;height:150px;width:150px;display:inline-block;position:relative'>"+
+                "<div id='popup_more' style='display:none;position:absolute;top:10vh;left:0;right:0;background-color:white;border-top:2px solid black;border-bottom:1px solid black;'>"+
+                    "<div style='margin-bottom:15px;margin-top:15px;margin-left:15px;height:150px;width:150px;display:inline-block;position:relative'>"+
                       "<div class='center round' id='board'>"+
                         "<div class='center' id='red-bar'></div>"+
                         "<div class='center' id='pointer' style='transform: rotate("+String((parseInt(speed)+2)*3)+"deg)' >"+
@@ -494,19 +530,52 @@ function VEHICLES_MARKERS() {
                         "</div>"+
                       "</div>"+
                     "</div>"+
-                    "<div style='display:inline-block;position:relative'>"+
-                      "<ul>"+
-                        "<li><b>kierunek: </b>" + ztm_converted_direction(direction) + "</li>" +
-                        "<li><span style='display:inline;text-align:left;'><b>współrzędne: </b>" + coords + "</span>" +
-                        "<span style='display:inline;float:right;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='margin-top:-2px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span></li>" +
-                        "<li id='delay' ><b>opóźnienie: </b> " + ztm_converted_delay(delay) + "</li>" +
-                        "<li><b>wygenerowane: </b> <span id='generated_"+vehicleId+"'>" + Math.abs(parseInt(time_converted)) + "</span> sekund temu</li>" +
-                        "<li><b>sygnał gps: </b> " + ztm_converted_gps_quality(gps_quality) + "</li>" +
-                        "<li><b>rodzaj trasy: </b>" + ztm_converted_trip_type(trip_type) + "</li>" +
-                        "<li><b>kod pojazdu: </b>" + vehicleCode + "</li>" +
-                        "<li><b>ID pojazdu: </b>" + vehicleId + "</li>" +
-                      "</ul>"+
-                  "</div>"+
+                    "<div style='display: grid;grid-template: repeat(2,1fr) / repeat(2, 1fr);gap: 5px 5px;width:60vw;top:15px;left:200px;position:absolute;'>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/gps.png' alt='icon' />"+
+                        "<i style='display-block' class='"+ztm_converted_gps_quality(gps_quality)+"'>"+
+                        	"<span class='bar-1'></span>"+
+                        	"<span class='bar-2'></span>"+
+                        	"<span class='bar-3'></span>"+
+                        	"<span class='bar-4'></span>"+
+                        "</i>"+
+                      "</div>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/map.png' alt='icon' />"+
+                        "<span style='vertical-align:super;font-size:18px;margin-left:5px;display:inline;text-align:left;'><b>" + coords + "</b></span>" +
+                        "<span style='margin-left:5px;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='position:absolute;top:2.1vh;margin-top:-5px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span>" +
+                      "</div>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
+                        "<p style='display:inline-block;'>"+ztm_converted_direction(direction)+"</p>"+
+                      "</div>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
+                        "<p style='display:inline-block;'>"+ztm_converted_trip_type(trip_type)+"</p>"+
+                      "</div>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
+                        "<p style='display:inline-block;'>"+vehicleId+"</p>"+
+                      "</div>"+
+                      "<div style='display:block;'>"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
+                      "</div>"+
+                    "</div>"+
+                    "<div style='float:right;top:20px;margin-right:25px;display:inline-block;position:relative'>"+
+                      "<p style='margin-bottom:2px;font-size:18px;'>opóźnienie:</p>"+
+                      "<div>"+
+                        "<div id='display' class='display_box'>"+
+                          "<div id='sign' class='display_sign'>+</div>"+
+                          "<div id='display_outline' class='display_outline'>"+
+                            "<div class='display_display'>"+
+                              "<span class='display_number' id='number'>000</span>"+
+                              "<span class='display_digit'  id='digit'> S</span>"+
+                            "</div>"+
+                          "</div>"+
+                        "</div>"+
+                      "</div>"+
+                      "<p style='margin-top:2px;width:16vw;text-align:center;font-size:14px;'>(<span id='generated_"+vehicleId+"'>" +Math.abs(parseInt(time_converted)) + "</span> sekund temu)</p>"+
+                    "</div>"+
                 "</div>"+
               "</div>";
 

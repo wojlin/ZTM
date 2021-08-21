@@ -423,17 +423,17 @@ function VEHICLES_MARKERS() {
           // binding popup with informations about the vehicle
             var popup_data =
               "<div id='popup_info' data-generated='"+data_generated+"' data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style='display:block; width:100%; margin:0; padding:0;'>" +
-                "<div style='top:-3vh; position:relative; height:12vh; display:inline-block; width:7vw; margin-left:10px;'>"+
+                "<div style='position:absolute; width:7vh; margin-left:10px; margin-top:10px;'>"+
                   "<img style='width:7vh;' src='"+ztm_choose_icon(routeType).options.iconUrl + "' alt='icon' />"+
                 "</div>"+
-                "<div style='position:relative; height:12vh; display:inline-block; width:75px; margin-left:10px;' >"+
-                  "<span style='position:absolute;top:-1vh;width:100%;margin:0;text-align:center; line-height:60px; font-size:42px; color:red;'>" + line + "</span>"+
-                  "<span style='position:absolute;top:6vh;width:100%;margin:0; text-align:center; font-size:17px; color:black;'>" + vehicleCode + "</span>"+
+                "<div style='position:absolute; margin-left: 7vh;' >"+
+                  "<p style='line-height:7vh;margin:0;width:100%;display:inline-block;text-align:center; font-size:7vh; color:red;'>" + line + "</p>"+
+                  "<p style='margin:0;width:100%;display:inline-block;text-align:center; font-size:2vh; color:black;'>" + vehicleCode + "</p>"+
                 "</div>"+
-                "<div style='position:relative; height:12vh; display:inline-block; width:70%; margin-left:10px;' >"+
-                  "<span style='float:left;line-height:70px;font-size:3vw;'><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span>"+
+                "<div style='position:absolute; width: calc(60vw + 2vh); margin-left: 15vh; margin-top:2vh;' >"+
+                  "<span style='line-height:3vh;word-wrap: break-word;font-size: calc(1vw + 1.5vh);'><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span>"+
                 "</div>" +
-                "<div style='top:18px; float:right; height:12vh; position:absolute; display:block; width:10vw; right:20px;' >"+
+                "<div style='top:3.5vh; float:right; position:absolute; display:block; right:20px;' >"+
                     "<a id='button_more' style='display:block;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='block';ztm_set_delay_value('"+delay+"');ztm_move_pane(40); document.getElementById('button_less').style.display='block';document.getElementById('button_more').style.display='none';\""+" class='show_more'>▼ ▼ ▼</a>"+
                     "<a id='button_less' style='display:none;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='none';ztm_move_pane(13);document.getElementById('button_less').style.display='none';document.getElementById('button_more').style.display='block'; \""+" class='show_more'>▲ ▲ ▲</a>"+
                 "</div>" +
@@ -530,7 +530,7 @@ function VEHICLES_MARKERS() {
                         "</div>"+
                       "</div>"+
                     "</div>"+
-                    "<div style='display: grid;grid-template: repeat(2,1fr) / repeat(2, 1fr);gap: 5px 5px;width:60vw;top:15px;left:200px;position:absolute;'>"+
+                    "<div id='grid-layout' style='display: grid;grid-template: repeat(2,1fr) / repeat(2, 1fr);gap: 5px 5px;top:15px;left:200px;position:absolute;'>"+
                       "<div style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/gps.png' alt='icon' />"+
                         "<i style='display-block' class='"+ztm_converted_gps_quality(gps_quality)+"'>"+
@@ -540,24 +540,24 @@ function VEHICLES_MARKERS() {
                         	"<span class='bar-4'></span>"+
                         "</i>"+
                       "</div>"+
-                      "<div style='display:block;'>"+
+                      "<div class='grid-elem' style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/map.png' alt='icon' />"+
-                        "<span style='vertical-align:super;font-size:18px;margin-left:5px;display:inline;text-align:left;'><b>" + coords + "</b></span>" +
+                        "<span style='vertical-align:super;font-size:1.4vw;margin-left:5px;display:inline;text-align:left;'><b>" + coords + "</b></span>" +
                         "<span style='margin-left:5px;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='position:absolute;top:2.1vh;margin-top:-5px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span>" +
                       "</div>"+
-                      "<div style='display:block;'>"+
+                      "<div class='grid-elem' style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
                         "<p style='display:inline-block;'>"+ztm_converted_direction(direction)+"</p>"+
                       "</div>"+
-                      "<div style='display:block;'>"+
+                      "<div class='grid-elem' style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
                         "<p style='display:inline-block;'>"+ztm_converted_trip_type(trip_type)+"</p>"+
                       "</div>"+
-                      "<div style='display:block;'>"+
+                      "<div class='grid-elem' style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
                         "<p style='display:inline-block;'>"+vehicleId+"</p>"+
                       "</div>"+
-                      "<div style='display:block;'>"+
+                      "<div class='grid-elem' style='display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
                       "</div>"+
                     "</div>"+
@@ -574,7 +574,7 @@ function VEHICLES_MARKERS() {
                           "</div>"+
                         "</div>"+
                       "</div>"+
-                      "<p style='margin-top:2px;width:16vw;text-align:center;font-size:14px;'>(<span id='generated_"+vehicleId+"'>" +Math.abs(parseInt(time_converted)) + "</span> sekund temu)</p>"+
+                      "<p style='margin-top:2px;text-align:center;font-size:14px;'>(<span id='generated_"+vehicleId+"'>" +Math.abs(parseInt(time_converted)) + "</span> sekund temu)</p>"+
                     "</div>"+
                 "</div>"+
               "</div>";

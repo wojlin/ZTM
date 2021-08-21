@@ -1,8 +1,25 @@
-
-body
-{
-  background-color:rgb(50,50,50);
+@media only screen and (max-width: 900px) {
+  .display_box {
+    width: 100px !important;
+    height: 30px !important;
+  }
+  #number
+  {
+    font-size: 20px !important;
+    line-height: 20px !important;
+  }
+  #digit
+  {
+    font-size: 20px !important;
+    line-height: 20px !important;
+  }
+  #sign
+  {
+    font-size: 20px !important;
+    line-height: 30px !important;
+  }
 }
+
 
 .display_box
 {

@@ -1,5 +1,5 @@
 var debug_mode = true;
-var wait = 200000;
+var wait = 20000;
 
 var stops_stop_load_zoom = 15;
 var vehicles_data = [];

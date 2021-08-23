@@ -26,11 +26,12 @@ app downloads data from Open Data ZTM in Gdańsk and displays it on the leaflet 
 </div>
 
 #### to do:
-* top bar with information
+
 * time
 * fix the one time download
 
 #### recent done:
+* top bar with information
 * async request
 * attribution
 * smootch update

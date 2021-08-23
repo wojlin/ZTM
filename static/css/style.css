@@ -3,7 +3,7 @@ body
   background-color:black;
 }
 
-@media only screen and (max-width: 550px) {
+@media only screen and (max-width: 500px) {
   #grid-layout {
     display:none !important;
   }

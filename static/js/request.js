@@ -1,6 +1,5 @@
 var debug_mode = true;
 var wait = 200000;
-var timeout = 5000;
 
 var stops_stop_load_zoom = 15;
 var vehicles_data = [];
@@ -10,7 +9,7 @@ var routes = L.layerGroup().addTo(map);
 var routes_stops = L.layerGroup().addTo(map);
 var date = null;
 var first_boot = true;
-var data = [null, null, null, null, null];
+var data = [null, null, null, null];
 
 var loading_panel = document.getElementById("loading");
 var loading_text = document.getElementById("loading_text");
@@ -21,12 +20,16 @@ var current_marker = null;
 
 var update_generated = true;
 
+var first_layer = true;
+var saved_line = "6";
+
 var requests = [
-  ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps...", "!"],
-  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json", "ładowanie listy tras...", "!"],
-  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json", "ładowanie listy kursów...", "!"],
-  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/d3e96eb6-25ad-4d6c-8651-b1eb39155945/download/stopsingdansk.json", "ładowanie pozycji przystanków...", "."],
-  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/3115d29d-b763-4af5-93f6-763b835967d6/download/stopsintrip.json", "ładowanie przystanków powiązanych z trasą...", "."]
+  ["https://ckan2.multimediagdansk.pl/gpsPositions", "ładowanie pozycji gps...", "!", 3000],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/22313c56-5acf-41c7-a5fd-dc5dc72b3851/download/routes.json", "ładowanie listy tras...", "!", 3000],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/b15bb11c-7e06-4685-964e-3db7775f912f/download/trips.json", "ładowanie listy kursów...", "!", 3000],
+  ["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/d3e96eb6-25ad-4d6c-8651-b1eb39155945/download/stopsingdansk.json", "ładowanie pozycji przystanków...", ".", 3000],
+  //["https://ckan.multimediagdansk.pl/dataset/c24aa637-3619-4dc2-a171-a23eec8f2172/resource/3115d29d-b763-4af5-93f6-763b835967d6/download/stopsintrip.json", "ładowanie przystanków powiązanych z trasą...", ".", 10000],
+
 ]
 
 // this fuction is responsible for copying text to device clipboard
@@ -79,7 +82,7 @@ function ztm_cleanup(vehicles_lines, vehicles_groups) {
           break;
         }
       }
-      if (found_line == false) // layer will be disabled if overlay was not previously selected
+      if (found_line == false && (first_layer == false || saved_line != all_layers[l]["name"])) // layer will be disabled if overlay was not previously selected
       {
         all_layers[l]["layer"]["_map"] == null;
         all_layers[l]["layer"]["_mapToAdd"] == null;
@@ -87,6 +90,7 @@ function ztm_cleanup(vehicles_lines, vehicles_groups) {
       }
     }
   }
+  first_layer = false;
 }
 
 
@@ -109,56 +113,78 @@ function makeRequest(i) {
   if (debug_mode) {
     var startTime = new Date().getTime();
   }
+  if(requests[i][2] == "!" || requests[i][2] == ".")
+  {
+    loading_text.innerHTML = requests[i][1];
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", requests[i][0], true);
+    xhr.onload = function() {
+      if (this.status >= 200 && this.status < 300) {
 
-  loading_text.innerHTML = requests[i][1];
+        if (debug_mode) {
+          var endTime = new Date().getTime();
+          console.log("downloaded " + i + " request in " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
+        }
+        data[i] = JSON.parse(xhr.responseText);
 
-  let xhr = new XMLHttpRequest();
-  xhr.open("GET", requests[i][0]);
-  xhr.onload = function() {
-    if (this.status >= 200 && this.status < 300) {
+        if(requests[i][2] == ".")
+        {
+          requests[i][2] = ",";
+        }
+        if (i < requests.length - 1) {
+          makeRequest(i + 1);
+        } else {
+          check_packets_error();
+          first_boot = false;
+          VEHICLES_MARKERS();
+        }
 
+      } else {
+        if (debug_mode) {
+          var endTime = new Date().getTime();
+          console.log("failed " + i + " request in " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
+        }
+        if (i < requests.length - 1) {
+          makeRequest(i + 1);
+        } else {
+          check_packets_error();
+          first_boot = false;
+          VEHICLES_MARKERS();
+        }
+      }
+    };
+    xhr.ontimeout = function() {
       if (debug_mode) {
         var endTime = new Date().getTime();
-        console.log("downloaded " + i + " request in " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
+        console.log("aborted " + i + " request after " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
       }
-      data[i] = JSON.parse(xhr.responseText);
+      if(requests[i][2] == ".")
+      {
+        requests[i][2] = ",";
+      }
       if (i < requests.length - 1) {
         makeRequest(i + 1);
       } else {
         check_packets_error();
         first_boot = false;
-        VEHICLES_MARKERS()
+        VEHICLES_MARKERS();
       }
-
-    } else {
-      if (debug_mode) {
-        var endTime = new Date().getTime();
-        console.log("failed " + i + " request in " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
-      }
-      if (i < requests.length - 1) {
-        makeRequest(i + 1);
-      } else {
-        check_packets_error();
-        first_boot = false;
-        VEHICLES_MARKERS()
-      }
-    }
-  };
-  xhr.ontimeout = function() {
-    if (debug_mode) {
-      var endTime = new Date().getTime();
-      console.log("aborted " + i + " request after " + String(Number((endTime - startTime) / 1000).toFixed(2)) + " s")
-    }
+    };
+    xhr.timeout = requests[i][3];
+    xhr.send();
+  }
+  else
+  {
     if (i < requests.length - 1) {
       makeRequest(i + 1);
     } else {
       check_packets_error();
       first_boot = false;
-      VEHICLES_MARKERS()
+      VEHICLES_MARKERS();
     }
-  };
-  xhr.timeout = timeout;
-  xhr.send();
+  }
+
+
 }
 
 
@@ -371,9 +397,9 @@ function VEHICLES_MARKERS() {
 
           if (data[2] != null) {
             for (var t = 0; t < data[2][date]["trips"].length; t++) {
-              if (data[2][date]["trips"][t]["tripId"] == data[0]["Vehicles"][i]['Route']) {
+              if (data[2][date]["trips"][t]["tripId"] == data[0]["Vehicles"][i]['Route'] ) {
                 var direction = data[2][date]["trips"][t]["directionId"];
-                var trip_type = data[2][date]["trips"][t]["type"]
+                var trip_type = data[2][date]["trips"][t]["type"];
                 break;
               }
             }
@@ -394,6 +420,7 @@ function VEHICLES_MARKERS() {
           var routeId = data[1][date]["routes"][x]["routeId"]
           var routeType = data[1][date]["routes"][x]["routeType"];
           var routeLongName = data[1][date]["routes"][x]["routeLongName"];
+          var routeShortName = routeLongName.split('-')[2-parseInt(direction)];
           var tripId = data[0]["Vehicles"][i]['Route'];
 
           var speed = data[0]["Vehicles"][i]['Speed'];
@@ -420,6 +447,18 @@ function VEHICLES_MARKERS() {
             offset: L.point(0, 10)
           })
 
+          var margin_left = 15;
+          var font_size = 7;
+          if(line.length == 2)
+          {
+            margin_left = 16;
+            font_size = 5;
+          }
+          if(line.length == 3)
+          {
+            margin_left = 18;
+            font_size = 4;
+          }
           // binding popup with informations about the vehicle
             var popup_data =
               "<div id='popup_info' data-generated='"+data_generated+"' data-id='"+ vehicleId +"' data-direction='" + direction + "' data-tripId='" + tripId + "' data-routeId='" + routeId + "' style='display:block; width:100%; margin:0; padding:0;'>" +
@@ -427,13 +466,13 @@ function VEHICLES_MARKERS() {
                   "<img style='width:7vh;' src='"+ztm_choose_icon(routeType).options.iconUrl + "' alt='icon' />"+
                 "</div>"+
                 "<div style='position:absolute; margin-left: 7vh;' >"+
-                  "<p style='line-height:7vh;margin:0;width:100%;display:inline-block;text-align:center; font-size:7vh; color:red;'>" + line + "</p>"+
+                  "<p style='line-height:7vh;margin:0;width:100%;display:inline-block;text-align:center; font-size:"+font_size+"vh; color:red;'>" + line + "</p>"+
                   "<p style='margin:0;width:100%;display:inline-block;text-align:center; font-size:2vh; color:black;'>" + vehicleCode + "</p>"+
                 "</div>"+
-                "<div style='position:absolute; width: calc(60vw + 2vh); margin-left: 15vh; margin-top:2vh;' >"+
-                  "<span style='line-height:3vh;word-wrap: break-word;font-size: calc(1vw + 1.5vh);'><b>" + data[1][date]["routes"][x]["routeLongName"] + "</b></span>"+
+                "<div style='position:absolute; width: calc(45vw + 2vh); margin-left: "+margin_left+"vh; margin-top:2vh;' >"+
+                  "<span style='line-height:3vh;word-wrap: break-word;font-size: calc(1vw + 1.5vh);'><b>" + routeLongName + "</b></span>"+
                 "</div>" +
-                "<div style='top:3.5vh; float:right; position:absolute; display:block; right:20px;' >"+
+                "<div style='top:2.5vh; float:right; position:absolute; display:block; right:20px;' >"+
                     "<a id='button_more' style='display:block;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='block';ztm_set_delay_value('"+delay+"');ztm_move_pane(40); document.getElementById('button_less').style.display='block';document.getElementById('button_more').style.display='none';\""+" class='show_more'>▼ ▼ ▼</a>"+
                     "<a id='button_less' style='display:none;' href='#' onclick=\""+"document.getElementById('popup_more').style.display='none';ztm_move_pane(13);document.getElementById('button_less').style.display='none';document.getElementById('button_more').style.display='block'; \""+" class='show_more'>▲ ▲ ▲</a>"+
                 "</div>" +
@@ -530,8 +569,8 @@ function VEHICLES_MARKERS() {
                         "</div>"+
                       "</div>"+
                     "</div>"+
-                    "<div id='grid-layout' style='display: grid;grid-template: repeat(2,1fr) / repeat(2, 1fr);gap: 5px 5px;top:15px;left:200px;position:absolute;'>"+
-                      "<div style='display:block;'>"+
+                    "<div id='grid-layout' style='display: grid;grid-template: repeat(1,1fr) / repeat(1, 1fr);gap: 5px 5px;top:15px;left:200px;position:absolute;'>"+
+                      "<div style='height:60px;display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/gps.png' alt='icon' />"+
                         "<i style='display-block' class='"+ztm_converted_gps_quality(gps_quality)+"'>"+
                         	"<span class='bar-1'></span>"+
@@ -540,25 +579,14 @@ function VEHICLES_MARKERS() {
                         	"<span class='bar-4'></span>"+
                         "</i>"+
                       "</div>"+
-                      "<div class='grid-elem' style='display:block;'>"+
+                      "<div style='height:45px;display:block;'>"+
                         "<img style='display-inline:block;width:30px;' src='static/images/map.png' alt='icon' />"+
                         "<span style='vertical-align:super;font-size:1.4vw;margin-left:5px;display:inline;text-align:left;'><b>" + coords + "</b></span>" +
-                        "<span style='margin-left:5px;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='position:absolute;top:2.1vh;margin-top:-5px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span>" +
+                        "<span style='margin-left:5px;text-align:right;'><button onclick='copyToClipboard(\"" + coords + "\")' style='position:absolute;margin-top:10px;cursor:pointer; border: solid 1px black;width:22px;height:22px;background-size:contain;background-image:url(static/images/copy.png);'></button></span>" +
                       "</div>"+
                       "<div class='grid-elem' style='display:block;'>"+
-                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
-                        "<p style='display:inline-block;'>"+ztm_converted_direction(direction)+"</p>"+
-                      "</div>"+
-                      "<div class='grid-elem' style='display:block;'>"+
-                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
-                        "<p style='display:inline-block;'>"+ztm_converted_trip_type(trip_type)+"</p>"+
-                      "</div>"+
-                      "<div class='grid-elem' style='display:block;'>"+
-                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
-                        "<p style='display:inline-block;'>"+vehicleId+"</p>"+
-                      "</div>"+
-                      "<div class='grid-elem' style='display:block;'>"+
-                        "<img style='display-inline:block;width:30px;' src='static/images/placeholder.png' alt='icon' />"+
+                        "<img style='display-inline:block;width:30px;' src='static/images/direction.png' alt='icon' />"+
+                        "<p style='display:inline-block;font-size:3vh;vertical-align:super;'>"+ztm_converted_direction(direction)+"</p>"+
                       "</div>"+
                     "</div>"+
                     "<div style='float:right;top:20px;margin-right:25px;display:inline-block;position:relative'>"+
@@ -693,6 +721,7 @@ map.on('popupopen', function(e) {
   eval(data_str);
 
   // drawing all stops on route of bus
+  /*
   if (data[3] != null && data[4] != null) {
     for (var i = 0; i < data[4][date]["stopsInTrip"].length; i++) {
       if (routeId == data[4][date]["stopsInTrip"][i]["routeId"] && tripId == data[4][date]["stopsInTrip"][i]["tripId"]) {
@@ -717,7 +746,7 @@ map.on('popupopen', function(e) {
       }
     }
   }
-
+  */
 
   if (data[0] != null && data[1] != null && data[2] != null) {
 

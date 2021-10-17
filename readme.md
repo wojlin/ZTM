@@ -24,15 +24,3 @@ app downloads data from Open Data ZTM in Gdańsk and displays it on the leaflet 
   <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://leafletjs.com/"><img alt="icon" width="35px" height="35px" src="static/images/leaflet.png" /></a>
   <a style="display:inline-block; margin-left:5px;" target="_blank" href="https://ztm.gda.pl/"><img alt="icon" width="35px" height="35px" src="static/images/ztm.png" /></a>
 </div>
-
-#### to do:
-
-* time
-* fix the one time download
-
-#### recent done:
-* top bar with information
-* async request
-* attribution
-* smootch update
-* generated time better update
